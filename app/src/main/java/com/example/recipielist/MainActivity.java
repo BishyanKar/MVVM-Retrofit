@@ -32,7 +32,7 @@ import com.example.recipielist.viewmodels.RecipeViewModel;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends BaseActivity implements OnRecipeListener {
+public class MainActivity extends AppCompatActivity implements OnRecipeListener {
 
     private static final String TAG = "Main";
     private RecipeViewModel recipeViewModel;
@@ -107,6 +107,14 @@ public class MainActivity extends BaseActivity implements OnRecipeListener {
                     recipeRecyclerAdapter.setRecipes(recipes);
                     recipeViewModel.setPerformingQuery(false);
                 }
+            }
+        });
+        recipeViewModel.isQueryExhausted().observe(this,aBoolean->{
+            if(aBoolean)
+            {
+                //query exhausted
+                Log.d(TAG, "subscribeToRecipes: Query Exhausted");
+                recipeRecyclerAdapter.diplayExhausted();
             }
         });
     }

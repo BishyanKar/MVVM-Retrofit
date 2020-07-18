@@ -25,6 +25,7 @@ public class RecipeApiClient {
     private static RecipeApiClient instance;
     private MutableLiveData<List<Recipe>> mRecipes;
     private MutableLiveData<Recipe> bRecipe;
+    private MutableLiveData<Boolean> bRecipeRequestTimeout;
     private GetRecipeRunnable getRecipeRunnable;
     private RetrieveRecipeRunnable retrieveRecipeRunnable;
     public static final int DECODE_STATE_COMPLETED = 123;
@@ -41,6 +42,7 @@ public class RecipeApiClient {
     private RecipeApiClient() {
         mRecipes = new MutableLiveData<>();
         bRecipe = new MutableLiveData<>();
+        bRecipeRequestTimeout = new MutableLiveData<>();
     }
 
     public void setBgTask(BgTask bgTask) {
@@ -58,9 +60,15 @@ public class RecipeApiClient {
         retrieveRecipeRunnable = new RetrieveRecipeRunnable(resipeId);
         final Future handler = AppExecutors.getInstance().getNetworkIO().submit(retrieveRecipeRunnable);
 
+        bRecipeRequestTimeout.setValue(false);
         AppExecutors.getInstance().getNetworkIO().schedule(() -> {
+            bRecipeRequestTimeout.postValue(true);
             handler.cancel(true);
         },Constants.NETWORK_TIMEOUT,TimeUnit.MILLISECONDS);
+    }
+
+    public MutableLiveData<Boolean> isRecipeRequestTimeout() {
+        return bRecipeRequestTimeout;
     }
 
     public LiveData<List<Recipe>> getRecipes(){

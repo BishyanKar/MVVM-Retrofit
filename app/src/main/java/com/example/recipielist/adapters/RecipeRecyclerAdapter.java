@@ -32,6 +32,7 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     private static final int RECIPE_TYPE = 1;
     private static final int CATEGORY_TYPE = 2;
     private static final int LOADING_TYPE = 3;
+    private static final int EXHAUSTED_TYPE = 4;
 
     public RecipeRecyclerAdapter(OnRecipeListener onRecipeListener) {
         this.onRecipeListener = onRecipeListener;
@@ -54,6 +55,10 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             case LOADING_TYPE : {
                 view = LayoutInflater.from(mContext).inflate(R.layout.loading_item_layout,parent,false);
                 return new LoadingViewHolder(view);
+            }
+            case EXHAUSTED_TYPE : {
+                view = LayoutInflater.from(mContext).inflate(R.layout.search_exhausted_layout,parent,false);
+                return new SearchExhaustedViewHolder(view);
             }
             default: {
                 view = LayoutInflater.from(mContext).inflate(R.layout.recipe_list_item,parent,false);
@@ -112,6 +117,10 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         {
             return LOADING_TYPE;
         }
+        else if(recipes.get(position).getTitle().equals("EXHAUSTED..."))
+        {
+            return EXHAUSTED_TYPE;
+        }
         else if(position == recipes.size() -1 && position!=0 && !recipes.get(position).getTitle().equals("EXHAUSTED..."))
             return LOADING_TYPE;
         else return RECIPE_TYPE;
@@ -135,7 +144,23 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             categories.add(recipe);
         }
         recipes = categories;
-        notifyDataSetChanged();;
+        notifyDataSetChanged();
+    }
+    private void hideLoading(){
+        if(isLoading()){
+            for(Recipe recipe : recipes){
+                if(recipe.getTitle().equals("LOADING...")){
+                    recipes.remove(recipe);
+                }
+            }
+        }
+    }
+    public void diplayExhausted(){
+        //hideLoading();
+        Recipe exhaustedRecipe = new Recipe();
+        exhaustedRecipe.setTitle("EXHAUSTED...");
+        recipes.add(exhaustedRecipe);
+        notifyDataSetChanged();
     }
     public void displayLoading(){
         if(!isLoading()){

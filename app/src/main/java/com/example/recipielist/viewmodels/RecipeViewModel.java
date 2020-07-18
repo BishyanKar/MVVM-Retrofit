@@ -30,6 +30,10 @@ public class RecipeViewModel extends ViewModel {
         isPerformingQuery = false;
     }
 
+    public LiveData<Boolean> isQueryExhausted(){
+        return mRecipeRepository.isQueryExhausted();
+    }
+
     public LiveData<List<Recipe>> getRecipes() {
         return mRecipeRepository.getRecipes();
     }
@@ -54,7 +58,7 @@ public class RecipeViewModel extends ViewModel {
     }
 
     public void searchNext(){
-        if(!isPerformingQuery && flag){
+        if(!isPerformingQuery && flag && !isQueryExhausted().getValue()){
             mRecipeRepository.searchNext();
         }
     }
