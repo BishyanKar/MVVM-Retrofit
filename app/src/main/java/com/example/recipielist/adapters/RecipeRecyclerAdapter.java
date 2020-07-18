@@ -117,6 +117,14 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         else return RECIPE_TYPE;
     }
 
+    public Recipe getSelectedRecipie(int position){
+        if(recipes!=null){
+            if(recipes.size() > 0)
+                return recipes.get(position);
+        }
+        return null;
+    }
+
     public void diplayCategoryType(){
         List<Recipe> categories = new ArrayList<>();
         for(int i =0;i< Constants.DEFAULT_SEARCH_CATEGORIES.length;i++){

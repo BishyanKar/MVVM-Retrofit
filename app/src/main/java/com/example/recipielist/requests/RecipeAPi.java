@@ -21,6 +21,6 @@ public interface RecipeAPi {
     @GET("api/get")
     Call<RecipieResponse> getRecipe(
           @Query("key") String key,
-           @Query("rid") String recipe_id
+           @Query("rId") String recipe_id
     );
 }

@@ -10,6 +10,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -127,7 +128,9 @@ public class MainActivity extends BaseActivity implements OnRecipeListener {
 
     @Override
     public void onRecipeClick(int pos) {
-
+        Intent intent = new Intent(this,RecipeActivity.class);
+        intent.putExtra("recipe",recipeRecyclerAdapter.getSelectedRecipie(pos));
+        startActivity(intent);
     }
 
     @Override

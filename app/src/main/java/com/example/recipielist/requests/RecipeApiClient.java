@@ -1,13 +1,12 @@
 package com.example.recipielist.requests;
 
 import android.util.Log;
-import android.view.View;
 
-import com.airbnb.lottie.LottieAnimationView;
 import com.example.recipielist.AppExecutors;
 import com.example.recipielist.BgTask;
 import com.example.recipielist.models.Recipe;
 import com.example.recipielist.requests.responses.RecipeSearchResponse;
+import com.example.recipielist.requests.responses.RecipieResponse;
 import com.example.recipielist.util.Constants;
 
 import java.util.ArrayList;
@@ -25,7 +24,9 @@ public class RecipeApiClient {
     private static final String TAG = "RAC";
     private static RecipeApiClient instance;
     private MutableLiveData<List<Recipe>> mRecipes;
+    private MutableLiveData<Recipe> bRecipe;
     private GetRecipeRunnable getRecipeRunnable;
+    private RetrieveRecipeRunnable retrieveRecipeRunnable;
     public static final int DECODE_STATE_COMPLETED = 123;
     private BgTask bgTask;
     //private static BgTask bgTask = new BgTask();
@@ -39,10 +40,27 @@ public class RecipeApiClient {
 
     private RecipeApiClient() {
         mRecipes = new MutableLiveData<>();
+        bRecipe = new MutableLiveData<>();
     }
 
     public void setBgTask(BgTask bgTask) {
         this.bgTask = bgTask;
+    }
+
+    public MutableLiveData<Recipe> getbRecipe() {
+        return bRecipe;
+    }
+    public void getRecipeById(String resipeId)
+    {
+        if(retrieveRecipeRunnable!=null){
+            retrieveRecipeRunnable = null;
+        }
+        retrieveRecipeRunnable = new RetrieveRecipeRunnable(resipeId);
+        final Future handler = AppExecutors.getInstance().getNetworkIO().submit(retrieveRecipeRunnable);
+
+        AppExecutors.getInstance().getNetworkIO().schedule(() -> {
+            handler.cancel(true);
+        },Constants.NETWORK_TIMEOUT,TimeUnit.MILLISECONDS);
     }
 
     public LiveData<List<Recipe>> getRecipes(){
@@ -59,6 +77,51 @@ public class RecipeApiClient {
             //network timed out
             handler.cancel(true);
         }, Constants.NETWORK_TIMEOUT, TimeUnit.MILLISECONDS);
+    }
+
+    private class RetrieveRecipeRunnable implements Runnable{
+        private String recipeId;
+        boolean cancelRequest;
+
+        public RetrieveRecipeRunnable(String recipeId) {
+            this.recipeId = recipeId;
+            cancelRequest = false;
+        }
+
+        @Override
+        public void run() {
+            try {
+                Response response = getRecipe(recipeId).execute();
+                if (cancelRequest)
+                    return;
+                if(response.code() == 200){
+                    Recipe recipe = ((RecipieResponse)response.body()).getRecipe();
+                    bRecipe.postValue(recipe);
+                   // Log.d(TAG, "run: 200OK"+recipe.getTitle());
+                }
+                else {
+                    Log.d(TAG, "run: "+ response.errorBody().toString());
+                    bRecipe.postValue(null);
+                }
+                //animationView.setVisibility(View.INVISIBLE);
+                //bgTask.handleDecodeState(DECODE_STATE_COMPLETED);
+            }
+            catch (Exception e){
+                e.printStackTrace();
+                bRecipe.postValue(null);
+                //animationView.setVisibility(View.INVISIBLE);
+                //bgTask.handleDecodeState(DECODE_STATE_COMPLETED);
+            }
+        }
+        private Call<RecipieResponse> getRecipe(String recipeId){
+            return ServiceGenerator.getRecipeAPi().getRecipe(Constants.API_KEY,
+                    recipeId);
+        }
+        private void cancelReq()
+        {
+            Log.d(TAG, "cancelReq: cancelling search req");
+            cancelRequest  = true;
+        }
     }
 
     private class GetRecipeRunnable implements Runnable{
@@ -118,6 +181,12 @@ public class RecipeApiClient {
         {
             Log.d(TAG, "Retrofit request cancelled");
             getRecipeRunnable.cancelReq();
+            bgTask.handleDecodeState(DECODE_STATE_COMPLETED);
+        }
+        if(retrieveRecipeRunnable!=null)
+        {
+            Log.d(TAG, "Retrofit request cancelled");
+            retrieveRecipeRunnable.cancelReq();
             bgTask.handleDecodeState(DECODE_STATE_COMPLETED);
         }
     }

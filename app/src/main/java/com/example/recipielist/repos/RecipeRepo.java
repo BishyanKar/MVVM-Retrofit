@@ -32,9 +32,16 @@ public class RecipeRepo {
     public LiveData<List<Recipe>> getRecipes(){
         return recipeApiClient.getRecipes();
     }
+    public LiveData<Recipe> getRecipe(){
+        return recipeApiClient.getbRecipe();
+    }
 
     public void setBgTask(BgTask bgTask) {
         this.bgTask = bgTask;
+    }
+
+    public void searchRecipeById(String recipeId){
+        recipeApiClient.getRecipeById(recipeId);
     }
 
     public void searchRecipesApi(String query, int pageNumber){
