@@ -30,6 +30,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/recipe_image_height"
                 android:id="@+id/recipe_image"
+                android:transitionName="recipeImage"
                 android:scaleType="centerCrop" />
 
             <TextView
@@ -37,6 +38,7 @@
                 android:layout_height="wrap_content"
                 android:textSize="@dimen/recipe_title_text_size"
                 android:textColor="#000"
+                android:transitionName="recipeTitle"
                 android:id="@+id/recipe_title"
                 android:padding="7dp"
                 android:layout_below="@+id/recipe_image"

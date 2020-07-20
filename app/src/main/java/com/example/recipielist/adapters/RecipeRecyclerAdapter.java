@@ -1,8 +1,12 @@
 package com.example.recipielist.adapters;
 
+import android.app.ActivityOptions;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
+import android.util.Pair;
+import android.util.TimeUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,14 +19,21 @@ import com.bumptech.glide.request.RequestOptions;
 import com.example.recipielist.R;
 import com.example.recipielist.models.Recipe;
 import com.example.recipielist.util.Constants;
+import com.jakewharton.rxbinding3.view.RxView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.NonNull;
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 import androidx.recyclerview.widget.RecyclerView;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import kotlin.Unit;
 
 public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -194,12 +205,13 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         return (recipes!=null)? recipes.size() : 0;
     }
 
-    public class RecipeViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        TextView title,publisher,socialScore;
+    public class RecipeViewHolder extends RecyclerView.ViewHolder {
+        TextView title, publisher, socialScore;
         ImageView imageView;
         OnRecipeListener onRecipeListener;
+        CompositeDisposable compositeDisposable;
 
-        public RecipeViewHolder(@NonNull View itemView,OnRecipeListener onRecipeListener) {
+        public RecipeViewHolder(@NonNull View itemView, OnRecipeListener onRecipeListener) {
             super(itemView);
             this.onRecipeListener = onRecipeListener;
             title = itemView.findViewById(R.id.recipe_title);
@@ -207,12 +219,43 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             socialScore = itemView.findViewById(R.id.recipe_social_score);
             imageView = itemView.findViewById(R.id.recipe_image);
 
-            itemView.setOnClickListener(this);
+            compositeDisposable = new CompositeDisposable();
+
+            //itemView.setOnClickListener(this);
+            preventSpamAndListen(itemView);
         }
 
-        @Override
-        public void onClick(View view) {
-            onRecipeListener.onRecipeClick(getAdapterPosition());
+        public void preventSpamAndListen(View view) {
+            RxView.clicks(view)
+                    .throttleFirst(1000, TimeUnit.MILLISECONDS)  //thw window duration is set such that it allows the network request to complete
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Observer<Unit>() {
+                        @Override
+                        public void onSubscribe(Disposable d) {
+                            compositeDisposable.add(d);
+                        }
+
+                        @Override
+                        public void onNext(Unit unit) {
+                            Log.d("ADAPTER", "onNext: itemView click handled : "+System.currentTimeMillis());
+
+                            Pair<View,String> [] pairs = new Pair[2];
+                            pairs[0] = new Pair<View,String>(imageView,"recipeImage");
+                            pairs[1] = new Pair<View,String>(title,"recipeTitle");
+
+                            onRecipeListener.onRecipeClick(getAdapterPosition(),pairs);
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            e.printStackTrace();
+                        }
+
+                        @Override
+                        public void onComplete() {
+                            compositeDisposable.clear();
+                        }
+                    });
         }
     }
 }

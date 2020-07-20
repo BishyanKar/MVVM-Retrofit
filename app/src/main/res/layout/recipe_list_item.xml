@@ -23,6 +23,7 @@
                 android:layout_height="@dimen/recipe_image_height"
                 android:scaleType="centerCrop"
                 android:id="@+id/recipe_image"
+                android:transitionName="recipeImage"
                 android:src="@drawable/ic_launcher_background"/>
 
 
@@ -37,6 +38,7 @@
                     android:layout_height="wrap_content"
                     android:textSize="@dimen/recipe_title_text_size"
                     android:textColor="#000"
+                    android:transitionName="recipeTitle"
                     android:id="@+id/recipe_title"/>
 
                 <LinearLayout
